@@ -1,3 +1,5 @@
 *.pyc
 ipcdefs/cache
 *~
+*.cache
+node_modules/
