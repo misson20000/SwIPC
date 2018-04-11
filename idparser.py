@@ -32,9 +32,9 @@ type =
     | name:name template:[ template ]
     ;
 
-typeDef = doc:{ comment }* 'type' name:name '=' type:type ';' ;
+typeDef = doc:{ comment }* decorators:{ decorator }* 'type' name:type '=' type:type ';' ;
 
-interface = doc:{ comment }* 'interface' name:name [ 'is' serviceNames:serviceNameList ] '{' functions:{ funcDef }* '}' ;
+interface = doc:{ comment }* decorators:{ decorator }* 'interface' name:name [ 'is' serviceNames:serviceNameList ] '{' functions:{ funcDef }* '}' ;
 namedTuple = '(' @:','.{ type [ name ] } ')' ;
 namedType = type [ name ] ;
 comment = '#' line:/[^\\n]*/;
@@ -84,7 +84,8 @@ def parse(data):
 		if 'type' not in elem:
 			continue
 		#assert elem['name'] not in types
-		types[elem['name']] = parseType(elem['type'])
+		tdef = {}
+		types[str(elem['name'])] = parseType(elem['type'])
 
 	ifaces = {}
 	services = {}
