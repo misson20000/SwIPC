@@ -26,10 +26,11 @@ name = /[a-zA-Z_][a-zA-Z0-9_:]*/ ;
 sname = /[a-zA-Z_][a-zA-Z0-9_:\-]*/ ;
 serviceNameList = @:','.{ sname } ;
 template = '<' @:','.{ expression } '>' ;
+arrayLength = '[' length:number ']' ;
 structField = doc:{ comment }* type:type name:name ';' ;
 type =
     | 'struct' [ template ] '{' structFields:{ structField }+ '}'
-    | name:name template:[ template ]
+    | name:name template:[ template ] length:[ arrayLength ]
     ;
 
 typeDef = doc:{ comment }* decorators:{ decorator }* 'type' name:type '=' type:type ';' ;

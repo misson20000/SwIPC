@@ -28,22 +28,5 @@ module SwIPC
         end
       end
     end
-    
-    def needs_version_decorator?(versions, version_scope=ALL_VERSIONS)
-      return versions.first != version_scope.first || versions.last != version_scope.last
-    end
-    
-    def generate_version_decorator(versions, version_scope=ALL_VERSIONS)
-      if versions.first == version_scope.first && versions.last == version_scope.last then
-        return nil
-      end
-      if versions.last == "4.0.0" then
-        return "@version(#{versions.first}+)"
-      elsif versions.first == versions.last then
-        return "@version(#{versions.first})"
-      else
-        return "@version(#{versions.first}-#{versions.last})"
-      end
-    end
   end
 end

@@ -8,9 +8,9 @@
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.id\\'" . swipc-mode))
 
-(defconst swipc-type-keywords '("u8" "i8" "u16" "i16" "u32" "i32" "u64" "i64" "u128" "i128" "pid" "bytes" "object" "buffer" "array" "KObject" "align") "Type keywords for SwIPC mode")
+(defconst swipc-type-keywords '("u8" "i8" "u16" "i16" "u32" "i32" "u64" "i64" "u128" "i128" "pid" "bytes" "object" "buffer" "array" "KObject" "align" "data") "Type keywords for SwIPC mode")
 (defconst swipc-keywords '("type" "interface" "is" "struct") "Keywords for SwIPC mode")
-(defconst swipc-constants '("unknown") "Constants for SwIPC mode")
+(defconst swipc-constants '("unknown" "variable") "Constants for SwIPC mode")
 
 (defconst swipc-re-types (regexp-opt swipc-type-keywords 'words))
 (defconst swipc-re-keywords (regexp-opt swipc-keywords 'words))

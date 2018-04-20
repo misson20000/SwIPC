@@ -1,5 +1,9 @@
+require_relative "mergeable.rb"
+
 module SwIPC
   class Buffer
+    include Mergeable
+    
     def initialize(data_type, transfer_type, size, is_array=nil)
       @data_type = data_type
       @transfer_type = transfer_type
@@ -11,28 +15,22 @@ module SwIPC
     attr_reader :transfer_type
     attr_reader :size
     attr_reader :is_array
-    
-    def can_merge?(other)
-      if @data_type != nil && other.data_type != nil && @data_type != other.data_type then
-        return false
-      end
-      if @transfer_type != other.transfer_type then
-        return false
-      end
-      if @size != nil && other.size != nil && @size != other.size then
-        return false
-      end
-      if @is_array != nil && other.is_array != nil && @is_array != other.is_array then
-        return false
-      end
-      return true
+
+    def mergeable_properties
+      {
+        :@data_type => :nillable,
+        :@transfer_type => :exact,
+        :@size => :nillable,
+        :@is_array => :nillable
+      }
     end
 
-    def merge!(other)
-      SwIPC::merge_prop!(self, other, :@data_type)
-      SwIPC::merge_prop!(self, other, :@transfer_type)
-      SwIPC::merge_prop!(self, other, :@size)
-      SwIPC::merge_prop!(self, other, :@is_array)
+    def ==(other)
+      (other.is_a? Buffer) &&
+        (@data_type == other.data_type) &&
+        (@transfer_type == other.transfer_type) &&
+        (@size == other.size) &&
+        (@is_array == other.is_array)
     end
     
     def to_swipc
