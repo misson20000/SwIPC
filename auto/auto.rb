@@ -117,6 +117,7 @@ def add_data_to_command(cmd, key, value)
   end
 end
 
+# also infers types on the given version
 def add_args_to_command(cmd, data, has_args, has_info, version)
   if has_info then
     cmd.buffers||= []
@@ -164,7 +165,8 @@ def add_args_to_command(cmd, data, has_args, has_info, version)
         data_type = nil
         if type then
           data_type = cmd.context.get_or_infer_type(type.to_s)
-          data_type.assert_size_on(version, size, alignment)
+          data_type.assert_size_on(version, size)
+          data_type.assert_alignment_on(version, alignment)
         end
         cmd.inargs.push(SwIPC::Command::Arg.new(size, alignment, position, data_type))
         cmd.inargs.sort_by! do |a| a.position end
@@ -177,7 +179,8 @@ def add_args_to_command(cmd, data, has_args, has_info, version)
             raise "invalid OutRaw type"
           end
           data_type = cmd.context.get_or_infer_type(type.inside[0].to_s)
-          data_type.assert_size_on(version, size, alignment)
+          data_type.assert_size_on(version, size)
+          data_type.assert_alignment_on(version, alignment)
         end
         cmd.outargs.push(SwIPC::Command::Arg.new(size, alignment, position, data_type))
         cmd.outargs.sort_by! do |a| a.position end
@@ -223,22 +226,19 @@ def parseServerData(version, path)
   data.each_pair do |mod, data|
     source = SwIPC::DataSource.new(version, "server-" + mod)
     data.each_pair do |interface_name, interface_commands|
-      if interface_name == "nns::hosbinder::IHOSBinderDriver" then next end
+      if interface_name == "nns::hosbinder::IHOSBinderDriver" then next end # skip IHOSBinderDriver because there are conflicting definitions
+      
       i = context.get_or_create_interface(interface_name)
       i.exists_on(version)
+      
       interface_commands.each_pair do |id, desc|
-        begin
-          command = SwIPC::Command.new(context, id.to_i, source)
-          command.initialize_known
-          desc.each_pair do |key, value|
-            add_data_to_command(command, key, value)
-          end
-          command.validate
-          i.append_command(version, command)
-        #rescue => e
-        #  puts "on #{interface_name}##{id}: " + desc.inspect
-        #  throw e
+        command = SwIPC::Command.new(context, id.to_i, [version], source)
+        command.initialize_server_known
+        desc.each_pair do |key, value|
+          add_data_to_command(command, key, value)
         end
+        command.validate
+        i.append_command(version, command)
       end
     end
   end
@@ -250,11 +250,12 @@ def parseClientData(version, path, desc)
   source = SwIPC::DataSource.new(version, "client-" + desc)
   data = JSON.parse(File.read(path))
   data.each_pair do |interface_name, interface_commands|
-    if interface_name == "nns::hosbinder::IHOSBinderDriver" then next end
+    if interface_name == "nns::hosbinder::IHOSBinderDriver" then next end # skip IHOSBinderDriver because there are conflicting definitions
+    
     i = context.get_or_create_interface(interface_name)
     i.exists_on(version)
     interface_commands.each_pair do |id, desc|
-      command = SwIPC::Command.new(context, id.to_i, source)
+      command = SwIPC::Command.new(context, id.to_i, [version], source)
       desc.each_pair do |key, value|
         if key == "args" || key == "arginfo" then next end
         add_data_to_command(command, key, value)
@@ -281,23 +282,21 @@ contexts = [
   parseClientData("4.0.0", "auto/newdata/client/data4.json", "4.4.0-from-Hulu")
 ]
 
-contexts.reduce do |memo, obj|
-  memo.merge!(obj)
+master_context = contexts.reduce do |memo, obj|
+  memo ? memo.merge!(obj) : obj
 end
 
-return
-
-context.types.sort_by do |t|
+master_context.types.sort_by do |t|
   [t.versions.min, t.versions.max, t.name.to_s]
 end.each do |t|
   if t.should_emit? then
     puts t.to_swipc
   end
 end
-return
+
 puts ""
 
-puts(context.interfaces.sort_by do |i|
+puts(master_context.interfaces.sort_by do |i|
        i.name
      end.map do |i|
        i.to_swipc

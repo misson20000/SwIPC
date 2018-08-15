@@ -9,6 +9,10 @@ module SwIPC
           if a != nil && b != nil && a != b then
             return false
           end
+        when :nillable_mergeable
+          if a != nil && b != nil && !a.can_merge?(b) then
+            return false
+          end
         when :exact
           if a != b then
             return false
@@ -23,6 +27,9 @@ module SwIPC
                 return false
               end
               if !e[0].can_merge?(e[1]) then
+                puts "couldn't merge narmc"
+                puts "  " + e[0].inspect
+                puts "  " + e[1].inspect
                 return false
               end
             end
@@ -59,6 +66,18 @@ module SwIPC
           else
             if b != nil then
               if a != b then
+                raise "can't merge #{prop} with different values: #{a} and #{b}"
+              else
+                instance_variable_set(prop, b)
+              end
+            end
+          end
+        when :nillable_mergeable
+          if a == nil then
+            instance_variable_set(prop, b)
+          else
+            if b != nil then
+              if !a.can_merge?(b) then
                 raise "can't merge #{prop} with different values: #{a} and #{b}"
               else
                 instance_variable_set(prop, b)

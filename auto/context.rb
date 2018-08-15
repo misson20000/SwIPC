@@ -92,7 +92,21 @@ module SwIPC
     end
 
     def merge!(other)
-      # TODO
+      other.interfaces.each do |intf|
+        if @interfaces[intf.name] then
+          @interfaces[intf.name].merge! intf
+        else
+          @interfaces[intf.name] = intf
+        end
+      end
+      other.types.each do |type|
+        if @types[type.name] then
+          @types[type.name].merge! type
+        else
+          @types[type.name] = type
+        end
+      end
+      return self
     end
   end
 end

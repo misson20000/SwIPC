@@ -9,6 +9,14 @@ module SwIPC
     def to_swipc
       ""
     end
+    
+    def merge!(other)
+      other.versions.each do |v|
+        assert_size_on(v, other.size_on(v))
+        assert_alignment_on(v, other.alignment_on(v))
+      end
+      return self
+    end
   end
 
   class BuiltinType < Type
@@ -55,8 +63,8 @@ module SwIPC
     end
 
     def assert_alignment_on(version, alignment)
-      if alignment && alignment != @alignment then
-        raise "builtin type #{name} of #{@size} is not aligned to #{alignment}"
+      if alignment && alignment != @size then
+        raise "builtin type #{name} of alignment #{@size.inspect} is not aligned to #{alignment.inspect}"
       end
     end
 
@@ -122,7 +130,7 @@ module SwIPC
       if @alignments[version] && alignment && @alignments[version] != alignment then
         raise "type '#{@name}' on '#{version}' is already aligned to #{@alignments[version]} bytes, not #{alignment} bytes"
       end
-      @alignments[version] = size
+      @alignments[version] = alignment
       return self
     end
 
@@ -130,7 +138,7 @@ module SwIPC
     
     def to_swipc
       @sizes.keys.group_by do |v|
-        @sizes[v]
+        {:size => @sizes[v], :alignment => @alignments[v]}
       end.each_pair.map do |size, versions|
         out = ""
         if SwIPC::Decorators::Version.needed?(versions, VERSION_SCOPE) then
@@ -153,7 +161,7 @@ module SwIPC
             szstr = "bytes<0x#{size[:size].to_s(16)}>"
           end
         else
-          if size == nil then
+          if size[:size] == nil then
             szstr = "unknown"
           else
             alignstr = size[:alignment] ? "0x#{size[:alignment].to_s(16)}" : "unknown"
@@ -219,8 +227,20 @@ module SwIPC
       {:all => nil}
     end
 
-    def assert_size_on(version, size, alignment=nil)
-      raise "attempt to assert #{name} size"
+    def alignment_on(version)
+      nil
+    end
+    
+    def assert_size_on(version, size)
+      if size != nil then
+        raise "attempt to assert #{name} size"
+      end
+    end
+
+    def assert_alignment_on(version, alignment)
+      if alignment != nil then
+        raise "attempt to assert #{name} alignment"
+      end
     end
 
     def should_emit?

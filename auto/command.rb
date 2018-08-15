@@ -8,6 +8,9 @@ module SwIPC
     def initialize(context, id, versions, source=nil)
       @context = context
       @id = id
+      if !versions.is_a? Array then
+        raise "not an array"
+      end
       @sources = source ? [source] : []
       @versions = versions
       initialize_unknown
@@ -25,7 +28,7 @@ module SwIPC
       @outhandles = nil
     end
 
-    def initialize_known
+    def initialize_server_known
       @buffers = []
       @pid = false
       @inbytes = 0
@@ -54,7 +57,20 @@ module SwIPC
     attr_accessor :outargs
 
     def inspect
-      to_swipc
+      {
+        :id => @id,
+        :name => @name,
+        :buffers => @buffers,
+        :inargs => @inargs,
+        :outargs => @outargs,
+        :pid => @pid,
+        :inbytes => @inbytes,
+        :outbytes => @outbytes,
+        :ininterfaces => @ininterfaces,
+        :outinterfaces => @outinterfaces,
+        :sources => @sources,
+        :versions => @versions,
+      }.inspect
     end
     
     def append_arg(type, direction, versions, name=nil)
@@ -242,7 +258,7 @@ module SwIPC
         {:@size => :exact,
          :@alignment => :exact,
          :@position => :exact,
-         :@data_type => :nillable}
+         :@data_type => :nillable_mergeable}
       end
       
       def to_swipc
